@@ -16,15 +16,15 @@ document.querySelectorAll('.teaser-video video, .video-card video').forEach((v) 
 
 // ---- Live phase badge on the teaser video ----
 // Phase boundaries in *source* seconds (playbackRate does not shift them).
-// Clip: static/videos/visualshift_1.mp4, 23.4 s.
+// Clip: static/videos/hero.mp4 (clean_1 trimmed to 15.5 s).
 // READ OFF THE FOOTAGE, not off the run log — replace with the logged
 // phase-transition timestamps before this page is deployed.
 const PHASE_TIMES = [
   { t: 0.0,  key: 'transport-object',  label: 'transport \u2192 cup' },
-  { t: 3.0,  key: 'grasp',             label: 'handoff \u2192 frozen VLA grasps' },
-  { t: 12.0, key: 'transport-basket',  label: 'transport \u2192 box (cup attached)' },
-  { t: 16.0, key: 'place',             label: 'handoff \u2192 frozen VLA places' },
-  { t: 21.0, key: 'done',              label: 'sub-task goal reached' },
+  { t: 6.0,  key: 'grasp',             label: 'handoff \u2192 frozen VLA grasps' },
+  { t: 9.5,  key: 'transport-basket',  label: 'transport \u2192 box (cup attached)' },
+  { t: 12.5, key: 'place',             label: 'handoff \u2192 frozen VLA places' },
+  { t: 14.0, key: 'done',              label: 'sub-task goal reached' },
 ];
 
 (function () {

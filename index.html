@@ -28,6 +28,37 @@
         </div>
       </header>
 
+      <section class="section" id="rollouts">
+        <div class="container">
+          <h2 class="section-title">One rollout, coloured by who is in control</h2>
+          <p class="body-text">Every contact in this episode happens in orange.
+            The planner carries the arm to a pose and stops; the frozen policy
+            grasps; the planner carries the object, now part of the collision
+            model, to the box; the policy places. The clip below is that
+            rollout at 2&times;, with a badge naming the phase it is in, and
+            the strip under it is the same episode laid out frame by frame.</p>
+          <figure class="figure teaser-video">
+            <div class="video-phase-wrap">
+              <video id="teaser-video" autoplay muted loop playsinline controls>
+                <source src="static/videos/hero.mp4" type="video/mp4">
+              </video>
+              <div class="phase-badge" id="phase-badge" data-phase="transport-object">
+                <span class="phase-dot"></span>
+                <span class="phase-text">transport &rarr; cup</span>
+              </div>
+            </div>
+            <figcaption>The badge tracks who holds control as the clip plays.
+              Playback is 2&times;.</figcaption>
+          </figure>
+          <figure class="figure">
+            <img src="static/images/phase_strip.jpg" alt="">
+            <figcaption>The same episode, sixteen frames. Blue is planned
+              transport, grey the handoff instant, orange the frozen
+              policy.</figcaption>
+          </figure>
+        </div>
+      </section>
+
       <section class="section">
         <div class="container narrow">
           <h2 class="section-title">Abstract</h2>
@@ -47,6 +78,43 @@ manifold structure and geometric cost, and filters them based on IK feasibility
 and collision checks, using only a few reference demonstrations from the
 training data. The layer matches clean-LIBERO performance while improving
 robustness across perturbation, obstacle, and long-horizon settings.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <h2 class="section-title">Real-robot results</h2>
+          <p class="body-text">A physical UR10 arm, perception from a depth pipeline instead of simulator state. Two perturbations are crossed: the worktop covering is replaced (only pixels change) and distractor objects are scattered around the target (geometry changes). The gap widens exactly where the scene is hardest: on the clean tabletop the layer is worth 15 points (75.0 to 90.0), and under both perturbations at once it doubles the success rate outright (40.0 to 80.0).</p>
+          <figure class="figure">
+            <img src="static/images/conditions.jpg" alt="">
+            <figcaption>The four conditions: clean, clutter, visual shift, and both.</figcaption>
+          </figure>
+<div class="table-wrap ">
+<table>
+<thead>
+<tr><th>Arm</th><th>Clean</th><th>Clutter</th><th>Visual shift</th><th>Both</th><th>All</th><th>Time (s)</th></tr>
+<tr><th></th><th>n=20</th><th>n=10</th><th>n=10</th><th>n=10</th><th>n=50</th><th></th></tr>
+</thead>
+<tbody>
+<tr><td>FullVLA</td><td>15 (75.0)</td><td>8 (80.0)</td><td>5 (50.0)</td><td>4 (40.0)</td><td>32 (64.0)</td><td>49</td></tr>
+<tr class="row-overall"><td>+ ManifoldVLA</td><td>18 (90.0)</td><td>9 (90.0)</td><td>8 (80.0)</td><td>8 (80.0)</td><td><strong>43 (86.0)</strong></td><td><strong>21.3</strong></td></tr>
+</tbody></table>
+<p class="table-details">Successes and rate (%) over the 2&times;2 conditions. 50 episodes per arm in total.</p>
+</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <h2 class="section-title">More rollouts</h2>
+          <div class="video-grid">
+            <div class="video-card"><video autoplay muted loop playsinline controls><source src="static/videos/both_2.mp4" type="video/mp4"></video><p class="phase-cap">Both perturbations &mdash; policy alone scores 40.0 here</p></div>
+            <div class="video-card"><video autoplay muted loop playsinline controls><source src="static/videos/visualshift_1.mp4" type="video/mp4"></video><p class="phase-cap">Worktop replaced &mdash; policy alone 50.0</p></div>
+            <div class="video-card"><video autoplay muted loop playsinline controls><source src="static/videos/visualshift_2.mp4" type="video/mp4"></video><p class="phase-cap">Worktop replaced &mdash; policy alone 50.0</p></div>
+            <div class="video-card"><video autoplay muted loop playsinline controls><source src="static/videos/clean_2.mp4" type="video/mp4"></video><p class="phase-cap">Clean tabletop &mdash; policy alone 75.0</p></div>
+            <div class="video-card"><video autoplay muted loop playsinline controls><source src="static/videos/clutter_1.mp4" type="video/mp4"></video><p class="phase-cap">Distractors added &mdash; policy alone 80.0</p></div>
+          </div>
+          <p class="body-text">Hardest condition first, by the rate the frozen policy alone reaches in that cell. All videos play at 2&times;.</p>
         </div>
       </section>
 
@@ -251,74 +319,6 @@ robustness across perturbation, obstacle, and long-horizon settings.</p>
 </tbody></table>
 <p class="table-details">Transport &times; handoff target on clean LIBERO-Object. &sect; marks a separate code tree.</p>
 </div>
-        </div>
-      </section>
-
-      <section class="section" id="rollouts">
-        <div class="container">
-          <h2 class="section-title">One rollout, coloured by who is in control</h2>
-          <p class="body-text">Every contact in this episode happens in orange.
-            The planner carries the arm to a pose and stops; the frozen policy
-            grasps; the planner carries the object, now part of the collision
-            model, to the box; the policy places. The clip below is that
-            rollout at 2&times;, with a badge naming the phase it is in, and
-            the strip under it is the same episode laid out frame by frame.</p>
-          <figure class="figure teaser-video">
-            <div class="video-phase-wrap">
-              <video id="teaser-video" autoplay muted loop playsinline controls>
-                <source src="static/videos/visualshift_1.mp4" type="video/mp4">
-              </video>
-              <div class="phase-badge" id="phase-badge" data-phase="transport-object">
-                <span class="phase-dot"></span>
-                <span class="phase-text">transport &rarr; cup</span>
-              </div>
-            </div>
-            <figcaption>The badge tracks who holds control as the clip plays.
-              Playback is 2&times;.</figcaption>
-          </figure>
-          <figure class="figure">
-            <img src="static/images/phase_strip.jpg" alt="">
-            <figcaption>The same episode, sixteen frames. Blue is planned
-              transport, grey the handoff instant, orange the frozen
-              policy.</figcaption>
-          </figure>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="container">
-          <h2 class="section-title">Real-robot results</h2>
-          <p class="body-text">A physical UR10 arm, perception from a depth pipeline instead of simulator state. Two perturbations are crossed: the worktop covering is replaced (only pixels change) and distractor objects are scattered around the target (geometry changes). The gap widens exactly where the scene is hardest: on the clean tabletop the layer is worth 15 points (75.0 to 90.0), and under both perturbations at once it doubles the success rate outright (40.0 to 80.0).</p>
-          <figure class="figure">
-            <img src="static/images/conditions.jpg" alt="">
-            <figcaption>The four conditions: clean, clutter, visual shift, and both.</figcaption>
-          </figure>
-<div class="table-wrap ">
-<table>
-<thead>
-<tr><th>Arm</th><th>Clean</th><th>Clutter</th><th>Visual shift</th><th>Both</th><th>All</th><th>Time (s)</th></tr>
-<tr><th></th><th>n=20</th><th>n=10</th><th>n=10</th><th>n=10</th><th>n=50</th><th></th></tr>
-</thead>
-<tbody>
-<tr><td>FullVLA</td><td>15 (75.0)</td><td>8 (80.0)</td><td>5 (50.0)</td><td>4 (40.0)</td><td>32 (64.0)</td><td>49</td></tr>
-<tr class="row-overall"><td>+ ManifoldVLA</td><td>18 (90.0)</td><td>9 (90.0)</td><td>8 (80.0)</td><td>8 (80.0)</td><td><strong>43 (86.0)</strong></td><td><strong>21.3</strong></td></tr>
-</tbody></table>
-<p class="table-details">Successes and rate (%) over the 2&times;2 conditions. 50 episodes per arm in total.</p>
-</div>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="container">
-          <h2 class="section-title">More rollouts</h2>
-          <div class="video-grid">
-            <div class="video-card"><video autoplay muted loop playsinline controls><source src="static/videos/clean_1.mp4" type="video/mp4"></video><p class="phase-cap">Clean tabletop</p></div>
-            <div class="video-card"><video autoplay muted loop playsinline controls><source src="static/videos/clean_2.mp4" type="video/mp4"></video><p class="phase-cap">Clean tabletop</p></div>
-            <div class="video-card"><video autoplay muted loop playsinline controls><source src="static/videos/clutter_1.mp4" type="video/mp4"></video><p class="phase-cap">Distractor objects added</p></div>
-            <div class="video-card"><video autoplay muted loop playsinline controls><source src="static/videos/visualshift_2.mp4" type="video/mp4"></video><p class="phase-cap">Worktop covering replaced</p></div>
-            <div class="video-card"><video autoplay muted loop playsinline controls><source src="static/videos/both_2.mp4" type="video/mp4"></video><p class="phase-cap">Both perturbations at once</p></div>
-          </div>
-          <p class="body-text">All videos play at 2&times;.</p>
         </div>
       </section>
 
