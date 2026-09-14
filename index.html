@@ -90,7 +90,7 @@ robustness across perturbation, obstacle, and long-horizon settings.</p>
       <section class="section">
         <div class="container">
           <h2 class="section-title">The layer is free on clean benchmarks</h2>
-          <p class="body-text">The point of the clean suites is that nothing should happen here. There is no perturbation to be robust to, so a transport layer can only break things. It does not: the wrapped policy stays within a point of the backbone it wraps.</p>
+          <p class="body-text">The point of the clean suites is that nothing should happen here. There is no perturbation to be robust to, so a transport layer can only break things. It does not: against the same backbone run in our own harness the average is 95.4 against 95.9. Individual suites move both ways &mdash; Spatial down two points, LIBERO-10 up four.</p>
 <div class="table-wrap ">
 <table>
 <thead>
@@ -213,7 +213,7 @@ robustness across perturbation, obstacle, and long-horizon settings.</p>
       <section class="section">
         <div class="container">
           <h2 class="section-title">Which part of the recipe matters</h2>
-          <p class="body-text">Two ablations. The first removes score terms one at a time: dropping the manifold term entirely (w = 0) costs 37 points, far more than any geometric term, and weighting it alone still reaches 84.5. The second crosses the transport controller against the handoff target, and separates the two contributions &mdash; a better planner alone is not enough, and a fitted target alone is not enough.</p>
+          <p class="body-text">Two ablations. The first removes score terms one at a time: dropping the manifold term entirely (w = 0) drops 91.5 to 54.5, far more than any geometric term, and weighting it alone still reaches 84.5. The second crosses the transport controller against the handoff target, and separates the two contributions &mdash; a better planner alone is not enough, and a fitted target alone is not enough.</p>
 <div class="table-wrap ">
 <table>
 <thead>
@@ -285,7 +285,7 @@ robustness across perturbation, obstacle, and long-horizon settings.</p>
       <section class="section">
         <div class="container">
           <h2 class="section-title">Real-robot results</h2>
-          <p class="body-text">A physical UR10 arm, perception from a depth pipeline instead of simulator state. Two perturbations are crossed: the worktop covering is replaced (only pixels change) and distractor objects are scattered around the target (geometry changes). The gap widens exactly where the scene is hardest &mdash; on the clean tabletop the two arms are four episodes apart, under both perturbations at once they are twice that.</p>
+          <p class="body-text">A physical UR10 arm, perception from a depth pipeline instead of simulator state. Two perturbations are crossed: the worktop covering is replaced (only pixels change) and distractor objects are scattered around the target (geometry changes). The gap widens exactly where the scene is hardest: on the clean tabletop the layer is worth 15 points (75.0 to 90.0), and under both perturbations at once it doubles the success rate outright (40.0 to 80.0).</p>
           <figure class="figure">
             <img src="static/images/conditions.jpg" alt="">
             <figcaption>The four conditions: clean, clutter, visual shift, and both.</figcaption>
