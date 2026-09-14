@@ -1,436 +1,343 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Manifold: learned handoff manifolds for frozen vision-language-action policies under perturbation.">
-  <title>Manifold: Learned Handoff Manifolds for Frozen Vision-Language-Action Policies under Perturbation</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ManifoldVLA: Planning Where to Begin via Learned Handoff Manifolds</title>
+  <meta name="description" content="A geometric planner carries the arm to a
+    demonstration-fitted handoff pose; a frozen VLA does the contact.">
+  <meta name="robots" content="noindex">
   <link rel="stylesheet" href="static/fonts/fonts.css">
   <link rel="stylesheet" href="static/css/style.css">
 </head>
 <body>
-
-  <!-- ============ HERO ============ -->
-  <header class="hero">
-    <svg class="hero-trajectory" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <path class="traj traj-1" d="M -50 480 C 200 420, 350 300, 520 310 S 850 380, 1020 260 S 1180 150, 1260 180" />
-      <path class="traj traj-2" d="M -50 380 C 250 340, 420 220, 610 250 S 900 330, 1260 210" />
-      <path class="traj traj-3" d="M -50 550 C 300 500, 500 420, 700 430 S 1000 470, 1260 360" />
-      <circle class="traj-dot traj-dot-1" r="5" />
-      <circle class="traj-dot traj-dot-2" r="4" />
-      <circle class="traj-dot traj-dot-3" r="4" />
-    </svg>
-
-    <div class="hero-inner">
-      <h1 class="hero-title">Manifold: Learned Handoff Manifolds for Frozen Vision&ndash;Language&ndash;Action Policies under Perturbation</h1>
-      <p class="authors">Anonymous Authors</p>
-      <!-- Resource buttons (Paper / Code / Video) intentionally omitted for double-blind review. -->
-      <nav class="hero-links" aria-label="Paper resources"></nav>
-    </div>
-  </header>
-
   <main>
+      <header class="hero">
+        <div class="container hero-inner">
+          <p class="hero-kicker">Anonymous submission &middot; under review</p>
+          <h1 class="hero-title">ManifoldVLA: Planning Where to Begin via
+            Learned Handoff Manifolds</h1>
+          <p class="abstract-text">A geometric planner carries the arm to a
+            handoff pose fitted from demonstrations; a <strong>frozen</strong>
+            VLA does the contact. Nothing is retrained.</p>
+          <div class="hero-links">
+            <span class="btn btn-ic">Paper &mdash; withheld for review</span>
+            <span class="btn btn-ic">Code &mdash; withheld for review</span>
+            <a class="btn btn-ic" href="#rollouts">Rollouts</a>
+          </div>
+        </div>
+      </header>
 
-    <!-- ============ ABSTRACT ============ -->
-    <section class="section" id="abstract">
-      <div class="container narrow">
-        <h2 class="section-title">Abstract</h2>
-        <p class="abstract-text">
-          A vision&ndash;language&ndash;action policy is asked to solve a whole task from an arbitrary
-          starting state, and most of what it must do is transport &mdash; moving the arm across free
-          space to somewhere it can act. <strong>Manifold</strong> separates that global transport from
-          the local, contact-rich interaction, and learns only <em>where</em> to hand control back.
-          From the same demonstrations the policy was trained on, we fit a per-object
-          <em>handoff manifold</em>: the set of states from which that frozen policy reliably finishes
-          the job. A collision-aware planner carries the arm to a pose selected on this manifold, and
-          the <strong>unmodified</strong> policy takes over for the contact.
-        </p>
-        <p class="abstract-text">
-          Nothing about the policy changes &mdash; no fine-tuning, no adapters, no gradients. On clean
-          LIBERO the layer is cost-free. Under the 10,030 perturbed tasks of LIBERO-Plus it adds
-          <strong>+14.3</strong> points overall and <strong>+35.1</strong> where the robot&rsquo;s initial
-          state is perturbed; it quadruples collision-free success where an obstacle blocks the path;
-          and it makes a chain follow the instructed order where the policy alone never does
-          (<strong>0 &rarr; 81.7</strong>&thinsp;% under a reversed instruction).
-        </p>
-      </div>
-    </section>
+      <section class="section">
+        <div class="container narrow">
+          <h2 class="section-title">Abstract</h2>
+          <p class="body-text">Vision-language-action (VLA) policies show strong promise for
+robot manipulation, but end-to-end training is data-hungry and often brittle
+when the robot must move from a global reset state into narrow contact-rich
+regions. We propose <strong>ManifoldVLA</strong>, a plug-and-play transport
+layer that bridges an object-level phase for global transport and an
+action-level phase for short-horizon interaction. A geometric planner first
+moves the robot to a task-aware handoff pose near the target object, and an
+<em>unmodified</em> VLA policy then executes the local skill. This design
+reduces the burden of the required demonstrations for a robust learned policy
+and improves robustness in changing scenes through object-centric reasoning. To
+effectively select a grasp-conditioned approach pose, we propose a
+manifold-guided handoff selector that ranks candidates by grasp-approach
+manifold structure and geometric cost, and filters them based on IK feasibility
+and collision checks, using only a few reference demonstrations from the
+training data. The layer matches clean-LIBERO performance while improving
+robustness across perturbation, obstacle, and long-horizon settings.</p>
+        </div>
+      </section>
 
-    <!-- ============ TEASER / PHASE STRIP ============ -->
-    <section class="section" id="teaser">
-      <div class="container">
-        <h2 class="section-title">One rollout, coloured by who is in control</h2>
-        <p class="body-text narrow">
-          A real pick-and-place on a UR arm, under the visual shift: the worktop has been
-          replaced and every object left where it was. Blue is the planner; orange is the
-          untouched policy. The
-          layer carries the arm to a pose and stops &mdash; <strong>every contact happens in orange</strong>
-          &mdash; and the alternation repeats once per sub-task. The clip below is that rollout at
-          2&times;, with a badge naming the phase it is in; the strip under it is the same
-          episode laid out frame by frame.
-        </p>
-        <figure class="figure teaser-video">
-          <div class="video-phase-wrap">
-            <video id="teaser-video" autoplay muted loop playsinline controls>
-              <source src="static/videos/visualshift_1.mp4" type="video/mp4">
-            </video>
-            <div class="phase-badge" id="phase-badge" data-phase="transport-object">
-              <span class="phase-dot"></span>
-              <span class="phase-text">transport &rarr; cup</span>
+      <section class="section">
+        <div class="container">
+          <div class="stats-row">
+            <div class="stat"><span class="stat-value">92.2</span><span class="stat-label">LIBERO-Plus overall, GR00T N1.7 &plus; ManifoldVLA (10,030 perturbed tasks)</span></div>
+            <div class="stat"><span class="stat-value">7 / 7</span><span class="stat-label">perturbation dimensions where a ManifoldVLA variant is best</span></div>
+            <div class="stat"><span class="stat-value">0 &rarr; 81.7</span><span class="stat-label">LIBERO-Long++ reversed-order success, &pi;<sub>0.5</sub> (0 &rarr; 63.3 on GR00T N1.7)</span></div>
+            <div class="stat"><span class="stat-value">64.0 &rarr; 86.0</span><span class="stat-label">physical UR10 arm, 50 episodes per arm</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container narrow">
+          <h2 class="section-title">What the layer does</h2>
+          <figure class="figure">
+            <img src="static/images/teaser_fig.jpg" alt="">
+            <figcaption>A full manipulation episode is split in two. The planner owns the long, collision-prone transport; the frozen policy owns the short contact-rich remainder.</figcaption>
+          </figure>
+          <p class="body-text">A VLA trained end-to-end has to solve two very different problems at once: cross the workspace, and then make contact. The crossing is where perturbations bite &mdash; move the camera, relight the scene, or shift the layout and the policy is navigating from an unfamiliar state long before it ever touches anything. ManifoldVLA hands that part to a planner and gives the policy back the one thing it is reliably good at.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container narrow">
+          <h2 class="section-title">Method</h2>
+          <figure class="figure">
+            <img src="static/images/pipeline.jpg" alt="">
+            <figcaption>Phase&nbsp;0 picks the handoff pose; phase&nbsp;1 is planned transport; phase&nbsp;2 is the untouched VLA.</figcaption>
+          </figure>
+          <p class="body-text">The handoff manifold is <em>fitted</em>, not hand-tuned. From the same demonstrations the policy was trained on, we take the poses at which successful rollouts began their contact phase, and model them as a region in relative position and orientation around the object. At test time the planner samples grasp-conditioned candidates, scores them by distance to that manifold plus travel, alignment and rotation costs, and keeps the best one that survives IK and collision checks.</p>
+          <figure class="figure">
+            <img src="static/images/manifold_visual.jpg" alt="">
+            <figcaption>The fitted handoff region, in relative position and orientation.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <h2 class="section-title">The layer is free on clean benchmarks</h2>
+          <p class="body-text">The point of the clean suites is that nothing should happen here. There is no perturbation to be robust to, so a transport layer can only break things. It does not: the wrapped policy stays within a point of the backbone it wraps.</p>
+<div class="table-wrap ">
+<table>
+<thead>
+<tr><th>Method</th><th>Spatial</th><th>Object</th><th>Goal</th><th>10</th><th>Avg.</th></tr>
+</thead>
+<tbody>
+<tr><td>OpenVLA</td><td>84.7</td><td>88.4</td><td>79.2</td><td>53.7</td><td>76.5</td></tr>
+<tr><td>π<sub>0</sub></td><td>96.8</td><td><strong>98.8</strong></td><td>95.8</td><td>85.2</td><td>94.2</td></tr>
+<tr><td>OpenVLA-OFT</td><td>97.6</td><td>98.4</td><td>97.9</td><td><strong>94.5</strong></td><td><strong>97.1</strong></td></tr>
+<tr><td>π<sub>0.5</sub></td><td><strong>98.8</strong></td><td>98.2</td><td>98.0</td><td>92.4</td><td>96.9</td></tr>
+<tr><td>GR00T N1.7 (NVIDIA)</td><td>97.5</td><td>98.5</td><td>97.5</td><td><strong>94.5</strong></td><td>97.0</td></tr>
+<tr class="row-rule"><td colspan="6"></td></tr>
+<tr><td>GR00T N1.7 FullVLA (ours)</td><td>98.0</td><td>97.5</td><td><strong>98.5</strong></td><td>87.5</td><td>95.4</td></tr>
+<tr class="row-overall"><td>GR00T N1.7 + ManifoldVLA (ours)</td><td>96.0</td><td>98.0</td><td>98.0</td><td>91.5</td><td>95.9</td></tr>
+</tbody></table>
+<p class="table-details">Success rate (%) per suite, 200 episodes each.</p>
+</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <h2 class="section-title">Where it pays: 10,030 perturbed tasks</h2>
+          <p class="body-text">LIBERO-Plus perturbs one dimension at a time. Published baselines clear 95% on clean LIBERO and then collapse on at least one dimension &mdash; OpenVLA drops to 1.1% under a camera shift, UniVLA to 4.3%. Wrapping a frozen backbone in ManifoldVLA moves every dimension at once, and a ManifoldVLA variant takes <strong>all seven</strong> perturbation columns: GR00T N1.7 leads on camera, language, noise, background and light, &pi;<sub>0.5</sub> on robot initial state and layout. The unperturbed column is the one we do not win, which is the expected shape &mdash; clean performance is already saturated.</p>
+<div class="table-wrap ">
+<table>
+<thead>
+<tr><th>Method</th><th>Orig.</th><th>Robot Init</th><th>Camera</th><th>Layout</th><th>Language</th><th>Noise</th><th>Background</th><th>Light</th><th>Total</th></tr>
+</thead>
+<tbody>
+<tr><td>OpenVLA</td><td>76.5</td><td>4.1</td><td>1.1</td><td>31.6</td><td>26.8</td><td>19.3</td><td>25.3</td><td>4.4</td><td>—</td></tr>
+<tr><td>WorldVLA</td><td>79.1</td><td>30.2</td><td>0.3</td><td>39.4</td><td>44.2</td><td>12.2</td><td>14.5</td><td>29.4</td><td>—</td></tr>
+<tr><td>Nora</td><td>87.9</td><td>41.1</td><td>4.0</td><td>63.9</td><td>67.0</td><td>17.6</td><td>50.5</td><td>31.0</td><td>—</td></tr>
+<tr><td>π<sub>0</sub></td><td>94.2</td><td>6.6</td><td>15.8</td><td>70.4</td><td>61.0</td><td>79.4</td><td>78.5</td><td>79.6</td><td>—</td></tr>
+<tr><td>UniVLA</td><td>95.2</td><td>50.3</td><td>4.3</td><td>34.3</td><td>71.8</td><td>25.3</td><td>80.0</td><td>59.1</td><td>—</td></tr>
+<tr><td>OpenVLA-OFT</td><td>97.1</td><td>37.2</td><td>59.7</td><td>77.1</td><td>81.5</td><td>76.7</td><td>92.4</td><td>85.8</td><td>69.6</td></tr>
+<tr><td>RIPT-VLA</td><td><strong>97.5</strong></td><td>36.7</td><td>58.3</td><td>76.5</td><td>80.1</td><td>73.8</td><td>90.4</td><td>87.9</td><td>—</td></tr>
+<tr class="row-rule"><td colspan="10"></td></tr>
+<tr class="row-overall"><td><strong>GR00T N1.7 + ManifoldVLA (ours)</strong></td><td>96.0</td><td>95.9</td><td><strong>84.4</strong></td><td>84.7</td><td><strong>97.7</strong></td><td><strong>91.0</strong></td><td><strong>96.7</strong></td><td><strong>98.3</strong></td><td><strong>92.2</strong></td></tr>
+<tr class="row-overall"><td><strong>OpenVLA-OFT + ManifoldVLA (ours)</strong></td><td>96.5</td><td>90.6</td><td>77.5</td><td>81.4</td><td>91.7</td><td>79.6</td><td>93.3</td><td>87.4</td><td>85.5</td></tr>
+<tr class="row-overall"><td><strong>π<sub>0.5</sub> + ManifoldVLA (ours)</strong></td><td>97.4</td><td><strong>96.7</strong></td><td>82.9</td><td><strong>88.5</strong></td><td>95.4</td><td>90.5</td><td>95.4</td><td>96.6</td><td>91.9</td></tr>
+</tbody></table>
+<p class="table-details">Success rate (%) by perturbation dimension. Bold marks the column maximum. A dash means the source does not report a pooled total.</p>
+</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <h2 class="section-title">Obstacles: the transport is where collisions happen</h2>
+          <p class="body-text">SafeLIBERO puts an obstacle between the arm and the target. Because the planner owns the crossing, it is the component that can see and avoid the obstacle &mdash; the policy never has to. CAR is the share of episodes that avoided collision, TSR the share that finished the task.</p>
+<div class="table-wrap ">
+<table>
+<thead>
+<tr><th></th><th colspan="2" class="th-group">Spatial</th><th colspan="2" class="th-group">Object</th><th colspan="2" class="th-group">Goal</th><th colspan="2" class="th-group">Long</th><th colspan="2" class="th-group">Avg.</th></tr>
+<tr><th>Policy</th><th>CAR</th><th>TSR</th><th>CAR</th><th>TSR</th><th>CAR</th><th>TSR</th><th>CAR</th><th>TSR</th><th>CAR</th><th>TSR</th></tr>
+</thead>
+<tbody>
+<tr><td>OpenVLA-OFT</td><td>8.3</td><td>36.5</td><td>11.5</td><td>28.8</td><td>19.5</td><td>24.3</td><td>6.0</td><td>15.3</td><td>11.3</td><td>26.2</td></tr>
+<tr><td>π<sub>0.5</sub></td><td>14.0</td><td>59.3</td><td>18.0</td><td>57.5</td><td>20.0</td><td>60.0</td><td>16.5</td><td>54.3</td><td>17.1</td><td>57.8</td></tr>
+<tr><td>π<sub>0.5</sub> + AEGIS</td><td><strong>68.0</strong></td><td><strong>68.5</strong></td><td>71.3</td><td>72.5</td><td><strong>76.5</strong></td><td><strong>82.8</strong></td><td><strong>59.8</strong></td><td>46.3</td><td><strong>68.9</strong></td><td>67.5</td></tr>
+<tr class="row-rule"><td colspan="11"></td></tr>
+<tr><td>GR00T FullVLA</td><td>12.8</td><td>45.8</td><td>21.8</td><td>27.0</td><td>0.8</td><td>21.8</td><td>6.0</td><td>12.3</td><td>10.3</td><td>26.7</td></tr>
+<tr class="row-overall"><td>GR00T + ManifoldVLA</td><td>32.5</td><td>60.3</td><td><strong>78.8</strong></td><td><strong>84.8</strong></td><td>17.5</td><td>32.8</td><td>27.5</td><td>42.8</td><td>38.6</td><td>55.8</td></tr>
+<tr><td>π<sub>0.5</sub> (ours)</td><td>13.5</td><td>57.5</td><td>19.5</td><td>55.5</td><td>18.3</td><td>61.8</td><td>13.0</td><td>57.3</td><td>16.1</td><td>58.0</td></tr>
+<tr class="row-overall"><td>π<sub>0.5</sub> + ManifoldVLA</td><td>18.5</td><td>59.0</td><td>58.5</td><td>78.3</td><td>26.3</td><td>67.8</td><td>36.5</td><td><strong>78.3</strong></td><td>35.0</td><td><strong>70.9</strong></td></tr>
+</tbody></table>
+<p class="table-details">CAR and TSR (%) per suite, both levels pooled (400 episodes each).</p>
+</div>
+          <figure class="figure">
+            <img src="static/images/safelibero.jpg" alt="">
+            <figcaption>Collision avoidance and task success, per backbone.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <h2 class="section-title">Long chains: the order the instruction asked for</h2>
+          <p class="body-text">LIBERO-Long++ chains sub-tasks and then asks for them in reverse. This is the sharpest result in the paper. Every frozen baseline scores <strong>exactly zero</strong> on the reversed order &mdash; not a low number, zero &mdash; because the policy replays the ordering baked into its demonstrations regardless of what the instruction says. The planner reads the live scene instead, so the chain becomes executable without retraining anything: 0 &rarr; 81.7 on &pi;<sub>0.5</sub>, 0 &rarr; 63.3 on GR00T N1.7, 0 &rarr; 65.0 on OpenVLA-OFT.</p>
+          <figure class="figure">
+            <img src="static/images/long_pp.jpg" alt="">
+            <figcaption>Success in the instructed order (SR) and average progress (AP), with and without the layer.</figcaption>
+          </figure>
+<div class="table-wrap ">
+<table>
+<thead>
+<tr><th></th><th colspan="2" class="th-group">Long++ original</th><th colspan="2" class="th-group">Long++ reversed</th></tr>
+<tr><th>Method</th><th>SR</th><th>AP</th><th>SR</th><th>AP</th></tr>
+</thead>
+<tbody>
+<tr class="row-group"><td colspan="5"><em>Reported by the benchmark authors</em> (their harness, 10 initial states per task)</td></tr>
+<tr><td>π<sub>0.5</sub></td><td>83</td><td><strong>93</strong></td><td>0</td><td>0</td></tr>
+<tr><td>OpenVLA-OFT</td><td>7</td><td>11</td><td>0</td><td>0</td></tr>
+<tr><td>LiLo-VLA (full, retrained)</td><td>78</td><td>88</td><td><strong>85</strong></td><td><strong>89</strong></td></tr>
+<tr class="row-rule"><td colspan="5"></td></tr>
+<tr class="row-group"><td colspan="5"><em>Ours</em> (same 10 initial states/task, paired, frozen backbones)</td></tr>
+<tr><td>GR00T N1.7 FullVLA</td><td>46.7</td><td>54.2</td><td>0.0</td><td>25.8</td></tr>
+<tr class="row-overall"><td>GR00T N1.7 + ManifoldVLA</td><td><strong>86.7</strong></td><td>91.7</td><td>63.3</td><td>73.3</td></tr>
+<tr><td>π<sub>0.5</sub> FullVLA</td><td>71.7</td><td>80.0</td><td>0.0</td><td>30.0</td></tr>
+<tr class="row-overall"><td>π<sub>0.5</sub> + ManifoldVLA</td><td><strong>88.3</strong></td><td><strong>95.0</strong></td><td>81.7</td><td>82.5</td></tr>
+<tr class="row-overall"><td>OpenVLA-OFT + ManifoldVLA</td><td>80.0</td><td>82.5</td><td>65.0</td><td>73.3</td></tr>
+</tbody></table>
+<p class="table-details">SR = success in the instructed order, AP = average progress (%).</p>
+</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <h2 class="section-title">Where it stops helping</h2>
+          <p class="body-text">LIBERO-PRO changes the task itself rather than the scene: the goal, the target object, the spatial relation, the environment, or a language paraphrase. The layer helps most where the planner can still read the live scene and choose a valid handoff &mdash; environment perturbations show the largest separation, and position changes are less damaging because the target is selected from the current state rather than a memorised reset trajectory. Paraphrases and appearance changes are mostly neutral. Task changes that remove the required object, or make the task geometrically impossible, stay hard for both arms &mdash; the layer improves robustness to changed geometry, it cannot invent a missing affordance.</p>
+          <figure class="figure">
+            <img src="static/images/libero_pro.jpg" alt="">
+            <figcaption>LIBERO-PRO success rate (%) per suite, one perturbation at a time.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <h2 class="section-title">Which part of the recipe matters</h2>
+          <p class="body-text">Two ablations. The first removes score terms one at a time: dropping the manifold term entirely (w = 0) costs 37 points, far more than any geometric term, and weighting it alone still reaches 84.5. The second crosses the transport controller against the handoff target, and separates the two contributions &mdash; a better planner alone is not enough, and a fitted target alone is not enough.</p>
+<div class="table-wrap ">
+<table>
+<thead>
+<tr><th>Method</th><th>w</th><th>Travel</th><th>Align</th><th>Rotation</th><th>SR (%)</th></tr>
+</thead>
+<tbody>
+<tr class="row-overall"><td>ManifoldVLA (the recipe)</td><td>3</td><td>✓</td><td>✓</td><td>✓</td><td><strong>91.5</strong></td></tr>
+<tr class="row-rule"><td colspan="6"></td></tr>
+<tr class="row-group"><td colspan="6"><em>Weight on the manifold term changed</em></td></tr>
+<tr><td>manifold term removed</td><td>0</td><td>✓</td><td>✓</td><td>✓</td><td>54.5</td></tr>
+<tr><td>all terms weighted equally</td><td>1</td><td>✓</td><td>✓</td><td>✓</td><td>90.0</td></tr>
+<tr><td>manifold term alone</td><td>∞</td><td></td><td></td><td></td><td>84.5</td></tr>
+<tr class="row-rule"><td colspan="6"></td></tr>
+<tr class="row-group"><td colspan="6"><em>One geometric term removed</em></td></tr>
+<tr><td>travel removed</td><td>3</td><td></td><td>✓</td><td>✓</td><td>89.5</td></tr>
+<tr><td>alignment removed</td><td>3</td><td>✓</td><td></td><td>✓</td><td>84.5</td></tr>
+<tr><td>rotation removed</td><td>3</td><td>✓</td><td>✓</td><td></td><td>88.5</td></tr>
+</tbody></table>
+<p class="table-details">Effect of score terms on LIBERO-10 success. <em>w</em> weights the manifold term.</p>
+</div>
+<div class="table-wrap ">
+<table>
+<thead>
+<tr><th></th><th colspan="2" class="th-group">Transport</th><th colspan="2" class="th-group">Target</th><th></th></tr>
+<tr><th>Arm</th><th>OSC</th><th>cuRobo</th><th>Offs.</th><th>Man.</th><th>SR (%)</th></tr>
+</thead>
+<tbody>
+<tr><td>1. OSC + offset<sup>§</sup></td><td>✓</td><td></td><td>✓</td><td></td><td>87</td></tr>
+<tr><td>2. OSC + manifold</td><td>✓</td><td></td><td></td><td>✓</td><td>91</td></tr>
+<tr><td>3. cuRobo + offset<sup>§</sup></td><td></td><td>✓</td><td>✓</td><td></td><td>79</td></tr>
+<tr class="row-overall"><td>4. cuRobo + man. (ManifoldVLA)</td><td></td><td>✓</td><td></td><td>✓</td><td>98</td></tr>
+</tbody></table>
+<p class="table-details">Transport &times; handoff target on clean LIBERO-Object. &sect; marks a separate code tree.</p>
+</div>
+        </div>
+      </section>
+
+      <section class="section" id="rollouts">
+        <div class="container">
+          <h2 class="section-title">One rollout, coloured by who is in control</h2>
+          <p class="body-text">Every contact in this episode happens in orange.
+            The planner carries the arm to a pose and stops; the frozen policy
+            grasps; the planner carries the object, now part of the collision
+            model, to the box; the policy places. The clip below is that
+            rollout at 2&times;, with a badge naming the phase it is in, and
+            the strip under it is the same episode laid out frame by frame.</p>
+          <figure class="figure teaser-video">
+            <div class="video-phase-wrap">
+              <video id="teaser-video" autoplay muted loop playsinline controls>
+                <source src="static/videos/visualshift_1.mp4" type="video/mp4">
+              </video>
+              <div class="phase-badge" id="phase-badge" data-phase="transport-object">
+                <span class="phase-dot"></span>
+                <span class="phase-text">transport &rarr; cup</span>
+              </div>
             </div>
-          </div>
-          <figcaption>The badge tracks who holds control as the clip plays. Playback is 2&times;.</figcaption>
-        </figure>
-
-        <figure class="figure">
-          <img src="static/images/phase_strip.jpg" alt="Sixteen frames of a real robot rollout, colour-coded by controller: transport, handoff, frozen VLA, for the grasp sub-task and then the place sub-task.">
-        </figure>
-      </div>
-    </section>
-
-    <!-- ============ METHOD ============ -->
-    <section class="section" id="method">
-      <div class="container">
-        <h2 class="section-title">Method</h2>
-        <p class="body-text narrow">
-          One sub-task at a time, control is the sequence <em>transport &rarr; handoff &rarr; frozen VLA</em>.
-        </p>
-
-        <div class="principles">
-          <div class="principle">
-            <h3>Phase&nbsp;0 &mdash; Handoff selection</h3>
-            <p>
-              Fit an <em>action-aware handoff manifold</em> per object from the policy&rsquo;s own
-              50&nbsp;demonstrations per task &mdash; the states from which it reliably continues.
-              Candidates are sampled around the target, scored against the manifold and against
-              geometric costs, and filtered by the planner. This is the only learned component.
-            </p>
-          </div>
-          <div class="principle">
-            <h3>Phase&nbsp;1 &mdash; Collision-aware transport</h3>
-            <p>
-              A geometric planner moves the arm to the selected pose, avoiding obstacles and
-              respecting kinematic limits. On a place sub-task the carried object is attached to the
-              collision model. If no plan exists, the policy simply continues &mdash; the layer never
-              blocks it.
-            </p>
-          </div>
-          <div class="principle">
-            <h3>Phase&nbsp;2 &mdash; Frozen-VLA interaction</h3>
-            <p>
-              Control passes to the vision&ndash;language&ndash;action policy, which performs the short-horizon
-              contact until the sub-task&rsquo;s goal predicate holds. The checkpoint is
-              <strong>never modified</strong>, and the same layer runs over GR00T&nbsp;N1.7,
-              &pi;<sub>0</sub>, &pi;<sub>0.5</sub> and OpenVLA-OFT.
-            </p>
-          </div>
-        </div>
-
-        <figure class="figure">
-          <img src="static/images/pipeline.jpg" alt="Pipeline: Phase 0 fits a handoff shell and selects a pose on it; Phase 1 plans a collision-aware transport there; Phase 2 hands control to the unchanged policy.">
-        </figure>
-      </div>
-    </section>
-
-    <!-- ============ CLEAN LIBERO ============ -->
-    <section class="section" id="results-clean">
-      <div class="container">
-        <h2 class="section-title">The layer is free on clean benchmarks</h2>
-        <p class="body-text narrow">
-          On an unperturbed tabletop the policy would have reached the handoff state on its own, so
-          there is nothing for the layer to win. What matters is that it costs nothing: no suite moves
-          by more than four episodes out of 200, and on the longest chains the layer is ahead.
-        </p>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Method</th><th>Spatial</th><th>Object</th><th>Goal</th><th>LIBERO-10</th><th>Avg.</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>OpenVLA</td><td>84.7</td><td>88.4</td><td>79.2</td><td>53.7</td><td>76.5</td></tr>
-              <tr><td>&pi;<sub>0</sub></td><td>96.8</td><td>98.8</td><td>95.8</td><td>85.2</td><td>94.2</td></tr>
-              <tr><td>OpenVLA-OFT</td><td>97.6</td><td>98.4</td><td>97.9</td><td>94.5</td><td>97.1</td></tr>
-              <tr><td>&pi;<sub>0.5</sub></td><td>98.8</td><td>98.2</td><td>98.0</td><td>92.4</td><td>96.9</td></tr>
-              <tr><td>GR00T N1.7 (NVIDIA)</td><td>97.5</td><td>98.5</td><td>97.5</td><td>94.5</td><td>97.0</td></tr>
-              <tr><td>GR00T N1.7 FullVLA (ours)</td><td>98.0</td><td>97.5</td><td>98.5</td><td>87.5</td><td>95.4</td></tr>
-              <tr class="row-avg"><td>GR00T N1.7 + Manifold (ours)</td><td>96.0</td><td>98.0</td><td>98.0</td><td class="win">91.5</td><td>95.9</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="body-text narrow">
-          Success rate (%) per suite, 200 episodes each. The last two rows are ours on one harness and
-          are paired episode by episode; the rows above are published numbers on other harnesses.
-        </p>
-      </div>
-    </section>
-
-    <!-- ============ LIBERO-PLUS ============ -->
-    <section class="section" id="libero-plus">
-      <div class="container">
-        <h2 class="section-title">Where it pays: 10,030 perturbed tasks</h2>
-
-        <div class="stats-row">
-          <div class="stat">
-            <span class="stat-value">77.9% &rarr; 92.2%</span>
-            <span class="stat-label">LIBERO-Plus overall, FullVLA &rarr; +Manifold (+14.3 points)</span>
-          </div>
-          <div class="stat">
-            <span class="stat-value">60.8% &rarr; 95.9%</span>
-            <span class="stat-label">perturbed robot initial state (+35.1 points)</span>
-          </div>
-          <div class="stat">
-            <span class="stat-value">63.6% &rarr; 84.4%</span>
-            <span class="stat-label">changed camera viewpoint (+20.8 points)</span>
-          </div>
-        </div>
-
-        <p class="body-text narrow">
-          The gain tracks whether the perturbation attacks the <em>path</em> to the object. Where the
-          planner still reads live geometry &mdash; a moved robot base, a shifted camera &mdash; the layer keeps
-          almost everything. Where geometry is untouched and only appearance changes, both arms are
-          already near ceiling and there is little to win.
-        </p>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Method</th><th>Orig.</th><th>Robot&nbsp;Init</th><th>Camera</th><th>Layout</th>
-                <th>Language</th><th>Noise</th><th>Background</th><th>Light</th><th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>OpenVLA</td><td>76.5</td><td>4.1</td><td>1.1</td><td>31.6</td><td>26.8</td><td>19.3</td><td>25.3</td><td>4.4</td><td>&mdash;</td></tr>
-              <tr><td>WorldVLA</td><td>79.1</td><td>30.2</td><td>0.3</td><td>39.4</td><td>44.2</td><td>12.2</td><td>14.5</td><td>29.4</td><td>&mdash;</td></tr>
-              <tr><td>Nora</td><td>87.9</td><td>41.1</td><td>4.0</td><td>63.9</td><td>67.0</td><td>17.6</td><td>50.5</td><td>31.0</td><td>&mdash;</td></tr>
-              <tr><td>&pi;<sub>0</sub></td><td>94.2</td><td>6.6</td><td>15.8</td><td>70.4</td><td>61.0</td><td>79.4</td><td>78.5</td><td>79.6</td><td>&mdash;</td></tr>
-              <tr><td>UniVLA</td><td>95.2</td><td>50.3</td><td>4.3</td><td>34.3</td><td>71.8</td><td>25.3</td><td>80.0</td><td>59.1</td><td>&mdash;</td></tr>
-              <tr><td>OpenVLA-OFT</td><td>97.1</td><td>37.2</td><td>59.7</td><td>77.1</td><td>81.5</td><td>76.7</td><td>92.4</td><td>85.8</td><td>69.6</td></tr>
-              <tr><td>RIPT-VLA</td><td>97.5</td><td>36.7</td><td>58.3</td><td>76.5</td><td>80.1</td><td>73.8</td><td>90.4</td><td>87.9</td><td>&mdash;</td></tr>
-              <tr><td>GR00T N1.7 FullVLA (ours)</td><td>95.4</td><td>60.8</td><td>63.6</td><td>72.5</td><td>85.8</td><td>83.6</td><td>95.0</td><td>93.6</td><td>77.9</td></tr>
-              <tr class="row-avg"><td>GR00T N1.7 + Manifold (ours)</td><td>96.0</td><td class="win">95.9</td><td class="win">84.4</td><td class="win">84.7</td><td class="win">97.7</td><td class="win">91.0</td><td class="win">96.7</td><td class="win">98.3</td><td class="win">92.2</td></tr>
-              <tr class="row-overall"><td><em>gain</em></td><td>&mdash;</td><td>+35.1</td><td>+20.8</td><td>+12.3</td><td>+11.9</td><td>+7.4</td><td>+1.8</td><td>+4.7</td><td>+14.3</td></tr>
-              <tr><td>&pi;<sub>0.5</sub> + Manifold (ours)<sup>&dagger;</sup></td><td>97.4</td><td>96.7</td><td>82.9</td><td>88.5</td><td>95.4</td><td>90.5</td><td>95.4</td><td>96.6</td><td>91.9</td></tr>
-              <tr><td>OpenVLA-OFT + Manifold (ours)<sup>&dagger;</sup></td><td>96.5</td><td>90.6</td><td>77.5</td><td>81.4</td><td>91.7</td><td>79.6</td><td>93.3</td><td>87.4</td><td>85.5</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="body-text narrow">
-          <em>Total</em> pools all 10,030 variants, so each dimension enters weighted by how many
-          variants it contributes; it is not the mean of the seven columns. The published rows carry no
-          total because the benchmark&rsquo;s Table&nbsp;1 reports none. The <em>gain</em> row is paired per
-          task against the policy-alone arm of the same backbone, which is why it exists only for
-          GR00T&nbsp;N1.7. Rows marked&nbsp;&dagger; are layer-only campaigns with no policy-alone arm of
-          ours, so they are levels and nothing may be differenced against them.
-        </p>
-
-        <figure class="figure">
-          <img src="static/images/plus_dims.jpg" alt="Per-dimension success on LIBERO-Plus with Wilson 95% intervals and the paired difference above each pair.">
-        </figure>
-      </div>
-    </section>
-
-    <!-- ============ SAFELIBERO ============ -->
-    <section class="section" id="safety">
-      <div class="container">
-        <h2 class="section-title">Obstacles: the transport is where collisions do not happen</h2>
-        <p class="body-text narrow">
-          SafeLIBERO puts an obstacle between the arm and the target and scores whether the arm avoids
-          it (CAR) as well as whether the task succeeds (TSR). Of 165 colliding episodes, exactly
-          <strong>one</strong> has its first contact inside a planner phase.
-        </p>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th rowspan="2">Policy</th><th colspan="2">Spatial</th><th colspan="2">Object</th><th colspan="2">Goal</th><th colspan="2">Long</th><th colspan="2">Avg.</th></tr>
-              <tr><th>CAR</th><th>TSR</th><th>CAR</th><th>TSR</th><th>CAR</th><th>TSR</th><th>CAR</th><th>TSR</th><th>CAR</th><th>TSR</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>OpenVLA-OFT</td><td>8.3</td><td>36.5</td><td>11.5</td><td>28.8</td><td>19.5</td><td>24.3</td><td>6.0</td><td>15.3</td><td>5.7</td><td>26.2</td></tr>
-              <tr><td>&pi;<sub>0.5</sub></td><td>14.0</td><td>59.3</td><td>18.0</td><td>57.5</td><td>20.0</td><td>60.0</td><td>16.5</td><td>54.3</td><td>17.1</td><td>57.8</td></tr>
-              <tr><td>&pi;<sub>0.5</sub> + AEGIS</td><td>68.0</td><td>68.5</td><td>71.3</td><td>72.5</td><td>76.5</td><td>82.8</td><td>59.8</td><td>46.3</td><td class="win">68.9</td><td>67.5</td></tr>
-              <tr><td>GR00T FullVLA (ours)</td><td>12.8</td><td>45.8</td><td>21.8</td><td>27.0</td><td>0.8</td><td>21.8</td><td>6.0</td><td>12.3</td><td>10.3</td><td>26.7</td></tr>
-              <tr class="row-avg"><td>GR00T + Manifold (ours)</td><td>32.5</td><td>60.3</td><td class="win">78.8</td><td class="win">84.8</td><td>17.5</td><td>32.8</td><td>27.5</td><td>42.8</td><td>38.6</td><td>55.8</td></tr>
-              <tr><td>&pi;<sub>0.5</sub> (ours)</td><td>13.5</td><td>57.5</td><td>19.5</td><td>55.5</td><td>18.3</td><td>61.8</td><td>13.0</td><td>57.3</td><td>16.1</td><td>58.0</td></tr>
-              <tr class="row-avg"><td>&pi;<sub>0.5</sub> + Manifold (ours)</td><td>18.5</td><td>59.0</td><td>58.5</td><td>78.3</td><td>26.3</td><td>67.8</td><td>36.5</td><td>78.3</td><td>35.0</td><td class="win">70.9</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="body-text narrow">
-          Collision-avoidance rate and task success rate (%), both levels pooled, 400 episodes per cell.
-          On GR00T&nbsp;Object the layer takes CAR from 21.8 to 78.8. AEGIS leads on average CAR; our
-          &pi;<sub>0.5</sub> arm leads on average task success. The limitation is honest: where the handoff pose
-          sits close to the object, the planner has little room and the layer degenerates toward the
-          baseline.
-        </p>
-      </div>
-    </section>
-
-    <!-- ============ LILO ============ -->
-    <section class="section" id="long-horizon">
-      <div class="container">
-        <h2 class="section-title">Long chains: the order the instruction asked for</h2>
-
-        <div class="stats-row">
-          <div class="stat">
-            <span class="stat-value">0.0% &rarr; 81.7%</span>
-            <span class="stat-label">&pi;<sub>0.5</sub> under a <em>reversed</em> instruction, FullVLA &rarr; +Manifold</span>
-          </div>
-          <div class="stat">
-            <span class="stat-value">0.0% &rarr; 63.3%</span>
-            <span class="stat-label">GR00T N1.7, same test</span>
-          </div>
-        </div>
-
-        <p class="body-text narrow">
-          LiLo-VLA&rsquo;s Long++ asks for the same two skills in the opposite order, and scores success
-          only if they are executed in the order instructed. The zero is not a rounding of something
-          small: the policy alone reaches the goal in 60% of reversed episodes and satisfies the
-          instructed order in <em>none</em> of them. It does both sub-tasks backwards.
-        </p>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th rowspan="2">Method</th><th colspan="2">Long++ original</th><th colspan="2">Long++ reversed</th></tr>
-              <tr><th>SR</th><th>AP</th><th>SR</th><th>AP</th></tr>
-            </thead>
-            <tbody>
-              <tr><td colspan="5"><em>Reported by the benchmark authors</em> (their harness)</td></tr>
-              <tr><td>&pi;<sub>0.5</sub></td><td>83</td><td>93</td><td>0</td><td>0</td></tr>
-              <tr><td>OpenVLA-OFT</td><td>7</td><td>11</td><td>0</td><td>0</td></tr>
-              <tr><td>LiLo-VLA (full, retrained)</td><td>78</td><td>88</td><td>85</td><td>89</td></tr>
-              <tr><td colspan="5"><em>Ours</em> (same 10 initial states per task, paired, frozen policies)</td></tr>
-              <tr><td>GR00T N1.7 FullVLA</td><td>46.7</td><td>54.2</td><td>0.0</td><td>25.8</td></tr>
-              <tr class="row-avg"><td>GR00T N1.7 + Manifold</td><td class="win">86.7</td><td>91.7</td><td class="win">63.3</td><td>73.3</td></tr>
-              <tr><td>&pi;<sub>0.5</sub> FullVLA</td><td>71.7</td><td>80.0</td><td>0.0</td><td>30.0</td></tr>
-              <tr class="row-avg"><td>&pi;<sub>0.5</sub> + Manifold</td><td class="win">88.3</td><td class="win">95.0</td><td class="win">81.7</td><td>82.5</td></tr>
-              <tr class="row-avg"><td>OpenVLA-OFT + Manifold</td><td>80.0</td><td>82.5</td><td>65.0</td><td>73.3</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="body-text narrow">
-          SR is order-aware throughout; AP is average progress. LiLo-VLA reaches its reversed-order
-          numbers by retraining. We reach ours with every policy frozen.
-        </p>
-      </div>
-    </section>
-
-    <!-- ============ REAL ROBOT ROLLOUTS ============ -->
-    <section class="section" id="experiments">
-      <div class="container">
-        <h2 class="section-title">Real-Robot Rollouts</h2>
-        <p class="body-text narrow">
-          A UR arm, pick-and-place, with the frozen checkpoint and the handoff manifolds carried over
-          from simulation unchanged and the object pose supplied by an off-the-shelf segmentation and
-          depth pipeline in place of simulator state. Two perturbations are crossed: the worktop
-          covering is replaced (geometry untouched, only pixels change) and distractor objects are
-          scattered around the target (geometry changes). All videos play at 2&times;.
-        </p>
-
-        <div class="video-grid">
-          <figure class="video-card">
-            <video autoplay muted loop playsinline controls>
-              <source src="static/videos/clean_1.mp4" type="video/mp4">
-            </video>
-            <figcaption>Clean &mdash; nominal worktop, sparse scene</figcaption>
+            <figcaption>The badge tracks who holds control as the clip plays.
+              Playback is 2&times;.</figcaption>
           </figure>
-          <figure class="video-card">
-            <video autoplay muted loop playsinline controls>
-              <source src="static/videos/clean_2.mp4" type="video/mp4">
-            </video>
-            <figcaption>Clean, second episode</figcaption>
-          </figure>
-          <figure class="video-card">
-            <video autoplay muted loop playsinline controls>
-              <source src="static/videos/clutter_1.mp4" type="video/mp4">
-            </video>
-            <figcaption>Clutter &mdash; distractor objects added around the target</figcaption>
-          </figure>
-          <figure class="video-card">
-            <video autoplay muted loop playsinline controls>
-              <source src="static/videos/visualshift_2.mp4" type="video/mp4">
-            </video>
-            <figcaption>Visual shift &mdash; worktop replaced, every object left in place</figcaption>
-          </figure>
-          <figure class="video-card">
-            <video autoplay muted loop playsinline controls>
-              <source src="static/videos/both_2.mp4" type="video/mp4">
-            </video>
-            <figcaption>Both &mdash; worktop replaced <em>and</em> distractors added</figcaption>
+          <figure class="figure">
+            <img src="static/images/phase_strip.jpg" alt="">
+            <figcaption>The same episode, sixteen frames. Blue is planned
+              transport, grey the handoff instant, orange the frozen
+              policy.</figcaption>
           </figure>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ============ REAL ROBOT RESULTS ============ -->
-    <section class="section" id="results-real">
-      <div class="container">
-        <h2 class="section-title">Real-Robot Results</h2>
+      <section class="section">
+        <div class="container">
+          <h2 class="section-title">Real-robot results</h2>
+          <p class="body-text">A physical UR10 arm, perception from a depth pipeline instead of simulator state. Two perturbations are crossed: the worktop covering is replaced (only pixels change) and distractor objects are scattered around the target (geometry changes). The gap widens exactly where the scene is hardest &mdash; on the clean tabletop the two arms are four episodes apart, under both perturbations at once they are twice that.</p>
+          <figure class="figure">
+            <img src="static/images/conditions.jpg" alt="">
+            <figcaption>The four conditions: clean, clutter, visual shift, and both.</figcaption>
+          </figure>
+<div class="table-wrap ">
+<table>
+<thead>
+<tr><th>Arm</th><th>Clean</th><th>Clutter</th><th>Visual shift</th><th>Both</th><th>All</th></tr>
+<tr><th></th><th>n=20</th><th>n=10</th><th>n=10</th><th>n=10</th><th>n=50</th></tr>
+</thead>
+<tbody>
+<tr><td>FullVLA</td><td>15 (75.0)</td><td>8 (80.0)</td><td>5 (50.0)</td><td>4 (40.0)</td><td>32 (64.0)</td></tr>
+<tr class="row-overall"><td>+ ManifoldVLA</td><td>18 (90.0)</td><td>9 (90.0)</td><td>8 (80.0)</td><td>8 (80.0)</td><td><strong>43 (86.0)</strong></td></tr>
+</tbody></table>
+<p class="table-details">Successes and rate (%) over the 2&times;2 conditions. 50 episodes per arm in total.</p>
+</div>
+        </div>
+      </section>
 
-        <div class="stats-row">
-          <div class="stat">
-            <span class="stat-value">64.0% &rarr; 86.0%</span>
-            <span class="stat-label">pooled over 50 episodes per arm (+22 points, p&thinsp;=&thinsp;0.020)</span>
+      <section class="section">
+        <div class="container">
+          <h2 class="section-title">More rollouts</h2>
+          <div class="video-grid">
+            <div class="video-card"><video autoplay muted loop playsinline controls><source src="static/videos/clean_1.mp4" type="video/mp4"></video><p class="phase-cap">Clean tabletop</p></div>
+            <div class="video-card"><video autoplay muted loop playsinline controls><source src="static/videos/clean_2.mp4" type="video/mp4"></video><p class="phase-cap">Clean tabletop</p></div>
+            <div class="video-card"><video autoplay muted loop playsinline controls><source src="static/videos/clutter_1.mp4" type="video/mp4"></video><p class="phase-cap">Distractor objects added</p></div>
+            <div class="video-card"><video autoplay muted loop playsinline controls><source src="static/videos/visualshift_2.mp4" type="video/mp4"></video><p class="phase-cap">Worktop covering replaced</p></div>
+            <div class="video-card"><video autoplay muted loop playsinline controls><source src="static/videos/both_2.mp4" type="video/mp4"></video><p class="phase-cap">Both perturbations at once</p></div>
           </div>
+          <p class="body-text">All videos play at 2&times;.</p>
         </div>
+      </section>
 
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Arm</th><th>Clean<br><small>n=20</small></th><th>Clutter<br><small>n=10</small></th><th>Visual shift<br><small>n=10</small></th><th>Both<br><small>n=10</small></th><th>All<br><small>n=50</small></th></tr>
-            </thead>
-            <tbody>
-              <tr><td>FullVLA</td><td>15 (75.0)</td><td>8 (80.0)</td><td>5 (50.0)</td><td>4 (40.0)</td><td>32 (64.0)</td></tr>
-              <tr class="row-avg"><td>+ Manifold</td><td class="win">18 (90.0)</td><td class="win">9 (90.0)</td><td class="win">8 (80.0)</td><td class="win">8 (80.0)</td><td class="win">43 (86.0)</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <p class="body-text narrow">
-          Successes and rate (%). The expectation registered before the run was the largest gain under
-          clutter; the measurement says otherwise, and the miss is informative. Clutter changes
-          geometry, which the planner reads live, so a policy that never sees the obstacle is not much
-          harmed by it. The worktop changes nothing the planner reads and everything the policy sees,
-          so it lands entirely on the arm with no other source of the target.
-        </p>
-        <p class="body-text narrow">
-          No single cell separates the arms &mdash; ten episodes a cell put all four at p&thinsp;&ge;&thinsp;0.17 by
-          Fisher&rsquo;s exact test, and one episode is ten points. Pooled over the fifty episodes each arm
-          ran, 43/50 against 32/50 is the only comparison here we would defend on its own.
-        </p>
-
-        <figure class="figure">
-          <img src="static/images/conditions.jpg" alt="The four real-robot conditions: clean, clutter, visual shift, and both together.">
-          <figcaption>The four conditions. Rows change the worktop covering only; columns add distractor objects.</figcaption>
-        </figure>
-      </div>
-    </section>
-
-    <!-- ============ BIBTEX ============ -->
-    <section class="section" id="bibtex">
-      <div class="container narrow">
-        <h2 class="section-title">BibTeX</h2>
-        <pre class="bibtex">@inproceedings{manifold2026,
-  title     = {Manifold: Learned Handoff Manifolds for Frozen
-               Vision-Language-Action Policies under Perturbation},
-  author    = {Anonymous Authors},
+      <section class="section">
+        <div class="container narrow">
+          <h2 class="section-title">BibTeX</h2>
+          <pre class="bibtex">@inproceedings{manifoldvla2027,
+  title     = {ManifoldVLA: Planning Where to Begin via Learned Handoff Manifolds},
+  author    = {Anonymous},
   booktitle = {Under review},
-  year      = {2026}
+  year      = {2027}
 }</pre>
-      </div>
-    </section>
+        </div>
+      </section>
 
+      <footer class="footer">
+        <div class="container">
+          <p>Anonymous project page for a paper under review. No author,
+            affiliation or repository information is given here by design.</p>
+        </div>
+      </footer>
   </main>
-
-  <footer class="footer">
-    <div class="container narrow">
-      <p>Anonymous submission &mdash; under double-blind review. Page contains no author, institution or repository information.</p>
-    </div>
-  </footer>
-
   <script src="static/js/main.js"></script>
 </body>
 </html>

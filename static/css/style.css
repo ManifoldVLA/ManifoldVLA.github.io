@@ -650,3 +650,21 @@ figcaption {
   .pipeline { font-size: 0.78rem; gap: 6px; }
   .pipe-step { padding: 6px 12px; }
 }
+
+/* --- rows generated from the paper's tabular ------------------------- */
+/* \midrule inside the body: the paper's own grouping (published vs ours) */
+.row-rule td { padding: 0; height: 0; border-bottom: 1px solid var(--border); }
+/* \multicolumn label rows, e.g. "Reported by the benchmark authors" */
+.row-group td {
+  padding-top: 14px;
+  text-align: left;
+  font-size: 0.9em;
+  color: var(--text-dim);
+  border-bottom: none;
+}
+/* grouped column headers that span several columns */
+th.th-group { text-align: center; border-bottom: 1px solid var(--border); }
+
+/* our own rows, so the reader can separate them from published baselines */
+.table-wrap tr.row-overall td { background: var(--accent-soft); }
+.table-wrap tr.row-overall td:first-child { font-weight: 600; }
