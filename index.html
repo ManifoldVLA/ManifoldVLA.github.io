@@ -114,26 +114,29 @@ robustness across perturbation, obstacle, and long-horizon settings.</p>
       <section class="section">
         <div class="container">
           <h2 class="section-title">Where it pays: 10,030 perturbed tasks</h2>
-          <p class="body-text">LIBERO-Plus perturbs one dimension at a time. Published baselines clear 95% on clean LIBERO and then collapse on at least one dimension &mdash; OpenVLA drops to 1.1% under a camera shift, UniVLA to 4.3%. Wrapping a frozen backbone in ManifoldVLA moves every dimension at once, and a ManifoldVLA variant takes <strong>all seven</strong> perturbation columns: GR00T N1.7 leads on camera, language, noise, background and light, &pi;<sub>0.5</sub> on robot initial state and layout. The unperturbed column is the one we do not win, which is the expected shape &mdash; clean performance is already saturated.</p>
+          <p class="body-text">LIBERO-Plus perturbs one dimension at a time. Published baselines clear 95% on clean LIBERO and then collapse on at least one dimension &mdash; OpenVLA drops to 0.8% under a camera shift, UniVLA to 1.8%. Wrapping a frozen backbone in ManifoldVLA moves every dimension at once, and a ManifoldVLA variant takes <strong>all seven</strong> perturbation columns: GR00T N1.7 leads on camera, language, noise, background and light, &pi;<sub>0.5</sub> on robot initial state and layout. The unperturbed column is the one we do not win, which is the expected shape &mdash; clean performance is already saturated.</p>
 <div class="table-wrap ">
 <table>
 <thead>
 <tr><th>Method</th><th>Orig.</th><th>Robot Init</th><th>Camera</th><th>Layout</th><th>Language</th><th>Noise</th><th>Background</th><th>Light</th><th>Total</th></tr>
 </thead>
 <tbody>
-<tr><td>OpenVLA</td><td>76.5</td><td>4.1</td><td>1.1</td><td>31.6</td><td>26.8</td><td>19.3</td><td>25.3</td><td>4.4</td><td>—</td></tr>
-<tr><td>WorldVLA</td><td>79.1</td><td>30.2</td><td>0.3</td><td>39.4</td><td>44.2</td><td>12.2</td><td>14.5</td><td>29.4</td><td>—</td></tr>
-<tr><td>Nora</td><td>87.9</td><td>41.1</td><td>4.0</td><td>63.9</td><td>67.0</td><td>17.6</td><td>50.5</td><td>31.0</td><td>—</td></tr>
-<tr><td>π<sub>0</sub></td><td>94.2</td><td>6.6</td><td>15.8</td><td>70.4</td><td>61.0</td><td>79.4</td><td>78.5</td><td>79.6</td><td>—</td></tr>
-<tr><td>UniVLA</td><td>95.2</td><td>50.3</td><td>4.3</td><td>34.3</td><td>71.8</td><td>25.3</td><td>80.0</td><td>59.1</td><td>—</td></tr>
-<tr><td>OpenVLA-OFT</td><td>97.1</td><td>37.2</td><td>59.7</td><td>77.1</td><td>81.5</td><td>76.7</td><td>92.4</td><td>85.8</td><td>69.6</td></tr>
-<tr><td>RIPT-VLA</td><td><strong>97.5</strong></td><td>36.7</td><td>58.3</td><td>76.5</td><td>80.1</td><td>73.8</td><td>90.4</td><td>87.9</td><td>—</td></tr>
+<tr><td>OpenVLA</td><td>76.5</td><td>3.5</td><td>0.8</td><td>28.5</td><td>23.0</td><td>15.2</td><td>34.8</td><td>8.1</td><td>15.6</td></tr>
+<tr><td>WorldVLA</td><td>79.1</td><td>27.9</td><td>0.1</td><td>38.0</td><td>41.6</td><td>10.9</td><td>17.1</td><td>43.7</td><td>25.0</td></tr>
+<tr><td>Nora</td><td>87.9</td><td>37.0</td><td>2.2</td><td>62.1</td><td>65.1</td><td>12.8</td><td>58.6</td><td>45.7</td><td>39.0</td></tr>
+<tr><td>π<sub>0</sub></td><td>94.2</td><td>6.0</td><td>13.8</td><td>68.9</td><td>58.8</td><td>79.0</td><td>81.4</td><td>85.0</td><td>53.6</td></tr>
+<tr><td>UniVLA</td><td>95.2</td><td>46.2</td><td>1.8</td><td>31.9</td><td>69.6</td><td>21.2</td><td>81.0</td><td>69.0</td><td>42.9</td></tr>
+<tr><td>OpenVLA-OFT</td><td>97.1</td><td>31.9</td><td>56.4</td><td>74.2</td><td>79.5</td><td>75.8</td><td>93.3</td><td>88.7</td><td>69.6</td></tr>
+<tr><td>RIPT-VLA</td><td><strong>97.5</strong></td><td>31.2</td><td>55.2</td><td>74.2</td><td>77.6</td><td>73.5</td><td>91.6</td><td>88.4</td><td>68.4</td></tr>
 <tr class="row-rule"><td colspan="10"></td></tr>
+<tr><td>GR00T N1.7 FullVLA (ours)</td><td>95.4</td><td>60.8</td><td>63.6</td><td>72.5</td><td>85.8</td><td>83.6</td><td>95.0</td><td>93.6</td><td>77.9</td></tr>
 <tr class="row-overall"><td><strong>GR00T N1.7 + ManifoldVLA (ours)</strong></td><td>96.0</td><td>95.9</td><td><strong>84.4</strong></td><td>84.7</td><td><strong>97.7</strong></td><td><strong>91.0</strong></td><td><strong>96.7</strong></td><td><strong>98.3</strong></td><td><strong>92.2</strong></td></tr>
+<tr><td>(paired per task)</td><td></td><td>+35.1</td><td>+20.8</td><td>+12.3</td><td>+11.9</td><td>+7.4</td><td>+1.8</td><td>+4.7</td><td>+14.3</td></tr>
+<tr class="row-rule"><td colspan="10"></td></tr>
 <tr class="row-overall"><td><strong>OpenVLA-OFT + ManifoldVLA (ours)</strong></td><td>96.5</td><td>90.6</td><td>77.5</td><td>81.4</td><td>91.7</td><td>79.6</td><td>93.3</td><td>87.4</td><td>85.5</td></tr>
 <tr class="row-overall"><td><strong>π<sub>0.5</sub> + ManifoldVLA (ours)</strong></td><td>97.4</td><td><strong>96.7</strong></td><td>82.9</td><td><strong>88.5</strong></td><td>95.4</td><td>90.5</td><td>95.4</td><td>96.6</td><td>91.9</td></tr>
 </tbody></table>
-<p class="table-details">Success rate (%) by perturbation dimension. Bold marks the column maximum. A dash means the source does not report a pooled total.</p>
+<p class="table-details">Success rate (%) by perturbation dimension. Bold marks the column maximum. Published rows are the benchmark&rsquo;s own numbers; <em>Total</em> pools all 10,030 variants rather than averaging the seven columns.</p>
 </div>
         </div>
       </section>
@@ -293,12 +296,12 @@ robustness across perturbation, obstacle, and long-horizon settings.</p>
 <div class="table-wrap ">
 <table>
 <thead>
-<tr><th>Arm</th><th>Clean</th><th>Clutter</th><th>Visual shift</th><th>Both</th><th>All</th></tr>
-<tr><th></th><th>n=20</th><th>n=10</th><th>n=10</th><th>n=10</th><th>n=50</th></tr>
+<tr><th>Arm</th><th>Clean</th><th>Clutter</th><th>Visual shift</th><th>Both</th><th>All</th><th>Time (s)</th></tr>
+<tr><th></th><th>n=20</th><th>n=10</th><th>n=10</th><th>n=10</th><th>n=50</th><th></th></tr>
 </thead>
 <tbody>
-<tr><td>FullVLA</td><td>15 (75.0)</td><td>8 (80.0)</td><td>5 (50.0)</td><td>4 (40.0)</td><td>32 (64.0)</td></tr>
-<tr class="row-overall"><td>+ ManifoldVLA</td><td>18 (90.0)</td><td>9 (90.0)</td><td>8 (80.0)</td><td>8 (80.0)</td><td><strong>43 (86.0)</strong></td></tr>
+<tr><td>FullVLA</td><td>15 (75.0)</td><td>8 (80.0)</td><td>5 (50.0)</td><td>4 (40.0)</td><td>32 (64.0)</td><td>49</td></tr>
+<tr class="row-overall"><td>+ ManifoldVLA</td><td>18 (90.0)</td><td>9 (90.0)</td><td>8 (80.0)</td><td>8 (80.0)</td><td><strong>43 (86.0)</strong></td><td><strong>21.3</strong></td></tr>
 </tbody></table>
 <p class="table-details">Successes and rate (%) over the 2&times;2 conditions. 50 episodes per arm in total.</p>
 </div>
